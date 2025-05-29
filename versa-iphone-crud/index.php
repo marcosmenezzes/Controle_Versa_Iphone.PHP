@@ -95,9 +95,56 @@
 
 <div class="container mt-4 mb-5">
     <h1 class="text-center">📱 Controle de iPhones - Versa iPhone</h1>
+
+    <!-- FILTROS -->
+    <form method="GET" class="row g-2 mb-4">
+        <div class="col-6 col-md-3">
+            <select name="local" class="form-select" aria-label="Filtro Local">
+                <option value="">Todos os Locais</option>
+                <option value="Versa" <?= isset($_GET['local']) && $_GET['local'] == 'Versa' ? 'selected' : '' ?>>Versa</option>
+                <option value="Alex" <?= isset($_GET['local']) && $_GET['local'] == 'Alex' ? 'selected' : '' ?>>Alex</option>
+                <option value="Bin" <?= isset($_GET['local']) && $_GET['local'] == 'Bin' ? 'selected' : '' ?>>Bin</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <select name="situacao" class="form-select" aria-label="Filtro Situação">
+                <option value="">Todas as Situações</option>
+                <option value="Pendente" <?= isset($_GET['situacao']) && $_GET['situacao'] == 'Pendente' ? 'selected' : '' ?>>Pendente</option>
+                <option value="Concluído" <?= isset($_GET['situacao']) && $_GET['situacao'] == 'Concluído' ? 'selected' : '' ?>>Concluído</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-3">
+            <button type="submit" class="btn btn-primary w-100">🔍 Filtrar</button>
+        </div>
+        <div class="col-12 col-md-3">
+            <a href="index.php" class="btn btn-secondary w-100">❌ Limpar Filtros</a>
+        </div>
+    </form>
+
     <div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
         <a href="adicionar.php" class="btn btn-success flex-grow-1 flex-sm-grow-0">➕ Adicionar Aparelho</a>
     </div>
+
+    <?php
+    // FILTROS RECEBIDOS
+    $filtro_local = isset($_GET['local']) ? $_GET['local'] : '';
+    $filtro_situacao = isset($_GET['situacao']) ? $_GET['situacao'] : '';
+
+    // QUERY COM FILTROS
+    $sql = "SELECT * FROM aparelhos WHERE 1";
+
+    if ($filtro_local != '') {
+        $sql .= " AND local = '" . mysqli_real_escape_string($conexao, $filtro_local) . "'";
+    }
+
+    if ($filtro_situacao != '') {
+        $sql .= " AND situacao = '" . mysqli_real_escape_string($conexao, $filtro_situacao) . "'";
+    }
+
+    $sql .= " ORDER BY id DESC";
+
+    $resultado = mysqli_query($conexao, $sql);
+    ?>
 
     <!-- Tabela desktop -->
     <div class="table-container table-responsive">
@@ -116,9 +163,6 @@
             </thead>
             <tbody>
             <?php
-            $sql = "SELECT * FROM aparelhos ORDER BY id DESC";
-            $resultado = mysqli_query($conexao, $sql);
-
             while ($row = mysqli_fetch_assoc($resultado)) {
                 echo "<tr>";
                 echo "<td>{$row['id']}</td>";
@@ -165,7 +209,7 @@
     <!-- Cards mobile -->
     <div class="card-list">
         <?php
-        mysqli_data_seek($resultado, 0); // Resetar resultado para reutilizar
+        mysqli_data_seek($resultado, 0); // Resetar resultado para reutilizar no mobile
         while ($row = mysqli_fetch_assoc($resultado)) {
             $badgeClass = ($row['situacao'] == 'Pendente') ? 'bg-pendente' : 'bg-concluido';
             echo "<div class='card-item'>";
@@ -198,15 +242,18 @@
             echo "<div><label>Data:</label> {$row['data_cadastro']}</div>";
 
             echo "<div class='mt-2'>
-                <a href='editar.php?id={$row['id']}' class='btn btn-primary btn-sm me-1'>Editar</a>
-                <a href='deletar.php?id={$row['id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"Deseja realmente excluir?\")'>Excluir</a>
-            </div>";
+                    <a href='editar.php?id={$row['id']}' class='btn btn-primary btn-sm mb-1 w-100'>Editar</a>
+                    <a href='deletar.php?id={$row['id']}' class='btn btn-danger btn-sm w-100' onclick='return confirm(\"Deseja realmente excluir?\")'>Excluir</a>
+                  </div>";
 
             echo "</div>";
         }
         ?>
     </div>
+
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
