@@ -170,10 +170,11 @@
                 echo "<td>{$row['modelo']}</td>";
                 echo "<td>{$row['descricao']}</td>";
 
+                // Desktop table local select
                 echo "<td>
-                    <form method='POST' action='update_local.php'>
+                    <form class='d-inline'>
                         <input type='hidden' name='id' value='{$row['id']}'>
-                        <select name='local' class='form-select form-select-sm' onchange='this.form.submit()' aria-label='Local do aparelho'>
+                        <select name='local' class='form-select form-select-sm' data-ajax='true' aria-label='Local do aparelho'>
                             <option ".($row['local'] == 'Versa' ? 'selected' : '').">Versa</option>
                             <option ".($row['local'] == 'Alex' ? 'selected' : '').">Alex</option>
                             <option ".($row['local'] == 'Bin' ? 'selected' : '').">Bin</option>
@@ -183,8 +184,9 @@
 
                 $badgeClass = ($row['situacao'] == 'Pendente') ? 'bg-pendente' : 'bg-concluido';
 
+                // Situation button form
                 echo "<td>
-                    <form method='POST' action='update_situacao.php'>
+                    <form class='d-inline' data-ajax='true'>
                         <input type='hidden' name='id' value='{$row['id']}'>
                         <input type='hidden' name='situacao' value='".($row['situacao'] == 'Pendente' ? 'Concluído' : 'Pendente')."'>
                         <button type='submit' class='badge {$badgeClass}' aria-label='Alterar situação'>
@@ -218,10 +220,12 @@
             echo "<div><label>Modelo:</label> {$row['modelo']}</div>";
             echo "<div><label>Descrição:</label> {$row['descricao']}</div>";
 
+            // Mobile cards local select
             echo "<div><label>Local:</label>
-                <form method='POST' action='update_local.php' class='d-inline'>
+                <form class='d-inline'>
                     <input type='hidden' name='id' value='{$row['id']}'>
-                    <select name='local' class='form-select form-select-sm d-inline w-auto' onchange='this.form.submit()' aria-label='Local do aparelho'>
+
+                    <select name='local' class='form-select form-select-sm d-inline w-auto' data-ajax='true' aria-label='Local do aparelho'>
                         <option ".($row['local'] == 'Versa' ? 'selected' : '').">Versa</option>
                         <option ".($row['local'] == 'Alex' ? 'selected' : '').">Alex</option>
                         <option ".($row['local'] == 'Bin' ? 'selected' : '').">Bin</option>
@@ -229,8 +233,9 @@
                 </form>
             </div>";
 
+            // Situation button form
             echo "<div><label>Situação:</label>
-                <form method='POST' action='update_situacao.php' class='d-inline'>
+                <form class='d-inline' data-ajax='true'>
                     <input type='hidden' name='id' value='{$row['id']}'>
                     <input type='hidden' name='situacao' value='".($row['situacao'] == 'Pendente' ? 'Concluído' : 'Pendente')."'>
                     <button type='submit' class='badge {$badgeClass}' aria-label='Alterar situação'>
@@ -254,6 +259,72 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle situacao updates
+    const situacaoForms = document.querySelectorAll('form[data-ajax="true"]');
+    situacaoForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = this.querySelector('input[name="id"]').value;
+            const situacao = this.querySelector('input[name="situacao"]').value;
+            const button = this.querySelector('button');
+            
+            fetch('ajax_updates.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=update_situacao&id=${id}&situacao=${situacao}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update button text and class
+                    button.textContent = situacao;
+                    button.className = `badge ${situacao === 'Pendente' ? 'bg-pendente' : 'bg-concluido'}`;
+                    // Update hidden input
+                    this.querySelector('input[name="situacao"]').value = 
+                        situacao === 'Pendente' ? 'Concluído' : 'Pendente';
+                } else {
+                    alert('Erro ao atualizar situação');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao atualizar situação');
+            });
+        });
+    });
+
+    // Handle local updates
+    const localSelects = document.querySelectorAll('select[name="local"][data-ajax="true"]');
+    localSelects.forEach(select => {
+        select.addEventListener('change', function(e) {
+            const form = this.closest('form');
+            const id = form.querySelector('input[name="id"]').value;
+            
+            fetch('ajax_updates.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `action=update_local&id=${id}&local=${this.value}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    alert('Erro ao atualizar local');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao atualizar local');
+            });
+        });
+    });
+});
+</script>
 
 </body>
 </html>
